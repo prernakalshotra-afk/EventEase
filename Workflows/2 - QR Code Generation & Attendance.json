@@ -1,0 +1,678 @@
+{
+  "name": "2 - QR Code Generation & Attendance",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-qr",
+        "options": {}
+      },
+      "id": "6ac3b033-fe38-492d-8847-43de729c06a8",
+      "name": "Generate QR Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        48
+      ],
+      "webhookId": "c5e8009c-b525-4eff-aeff-fb299cf8c694"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "01cadba4-13cb-457f-a72a-1607ff1e5515",
+              "name": "sheetId",
+              "value": "YOUR_GOOGLE_SHEET_ID",
+              "type": "string"
+            },
+            {
+              "id": "69758834-9b89-49a9-962b-bd8511310c4c",
+              "name": "attendanceBaseUrl",
+              "value": "http://localhost:5678/webhook/mark-attendance",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c78de02f-f003-4a47-bfde-e31ac251564e",
+      "name": "Config (QR)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1696,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Generate QR Webhook').first().json.body || {};\nconst cfg = $('Config (QR)').first().json;\n\nif (!body.participantId || !body.email) {\n  throw new Error('Missing participantId or email in request body - cannot generate QR');\n}\n\nconst token = 'T' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);\nconst qrPayload = cfg.attendanceBaseUrl + '?participantId=' + encodeURIComponent(body.participantId) + '&token=' + token;\nconst qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=' + encodeURIComponent(qrPayload);\n\nreturn [{ json: {\n  participantId: body.participantId,\n  eventId: body.eventId || '',\n  fullName: body.fullName || '',\n  email: body.email,\n  eventName: body.eventName || '',\n  eventDate: body.eventDate || '',\n  eventVenue: body.eventVenue || '',\n  token,\n  qrPayload,\n  qrImageUrl,\n  generatedAt: new Date().toISOString(),\n  status: 'ACTIVE'\n} }];"
+      },
+      "id": "288b58ab-8cac-4e92-b4e1-90e682b0c04f",
+      "name": "Build QR Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "QR_Codes",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "fb3bac61-edc8-4f2b-8585-5b2ff1ad610d",
+      "name": "Store QR Info",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2240,
+        48
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Build QR Data').first().json.email }}",
+        "subject": "={{ 'Your QR pass for ' + $('Build QR Data').first().json.eventName }}",
+        "message": "=<div style=\"font-family:Arial,sans-serif;max-width:480px;margin:auto;text-align:center\"><h2>Your Event Pass 🎟️</h2><p>Hi {{ $('Build QR Data').first().json.fullName }}, show this QR code at the entrance to check in.</p><img src=\"{{ $('Build QR Data').first().json.qrImageUrl }}\" alt=\"QR code\" width=\"260\" height=\"260\"><p><b>{{ $('Build QR Data').first().json.participantId }}</b></p><p>{{ $('Build QR Data').first().json.eventName }}<br>{{ $('Build QR Data').first().json.eventVenue }}</p><p style=\"color:#777;font-size:12px\">If the image is hidden, choose 'Display images below' in your mail app.</p></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "363f87c3-95a7-44cc-891b-3dcc9add2aee",
+      "name": "Email QR Pass",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2512,
+        48
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "c25f2ac2-f4b0-44d6-ba63-6054ce9725a7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jyZLk2imQWVjwvKO",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "AuditLogs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "eb8e0c04-ac91-4d2a-b20c-1f10ae9fa211",
+      "name": "Log QR Generated",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2784,
+        48
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "mark-attendance",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5f8fa697-5090-43b3-a333-2fce86448cc8",
+      "name": "Attendance Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        432
+      ],
+      "webhookId": "c0c9479f-da95-4bd7-84a4-fb7d15ae7950"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cecc5181-abc8-4e84-b930-cd595ca245a6",
+              "name": "sheetId",
+              "value": "Google_sheet_id",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b482a513-99a0-44dd-9141-db70a7495d99",
+      "name": "Config (Attendance)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1696,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "=1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "QR_Codes",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "participantId",
+              "lookupValue": "={{ $('Attendance Webhook').first().json.query.participantId || 'MISSING' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6bc85a12-e0f2-4652-9dce-7a8e191d8305",
+      "name": "Lookup QR Record",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1968,
+        432
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 333116457,
+          "mode": "list",
+          "cachedResultName": "Attendance",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y/edit#gid=333116457"
+        },
+        "options": {}
+      },
+      "id": "e44c5ef1-b3ac-49bf-b2f5-18e2bd3c1117",
+      "name": "Check Attendance",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2240,
+        432
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $('Attendance Webhook').first().json.query || {};\nconst qr = $('Lookup QR Record').first().json || {};\nconst att = $('Check Attendance').first().json || {};\n\nlet outcome, message;\nif (!req.participantId || !req.token) {\n  outcome = 'INVALID_REQUEST'; message = 'The scan link is missing the participant ID or token.';\n} else if (!qr.participantId) {\n  outcome = 'INVALID_QR'; message = 'No registration was found for this QR code.';\n} else if (String(qr.token) !== String(req.token)) {\n  outcome = 'INVALID_QR'; message = 'This QR code is not valid (token mismatch).';\n} else if (att.attendanceId) {\n  outcome = 'ALREADY_MARKED'; message = 'Attendance was already recorded at ' + att.checkInTime + '.';\n} else {\n  outcome = 'SUCCESS'; message = 'Attendance recorded successfully.';\n}\n\nconst colors = { SUCCESS: '#16a34a', ALREADY_MARKED: '#d97706', INVALID_QR: '#dc2626', INVALID_REQUEST: '#dc2626' };\nconst titles = { SUCCESS: 'Check-in successful', ALREADY_MARKED: 'Already checked in', INVALID_QR: 'Invalid QR code', INVALID_REQUEST: 'Invalid request' };\nconst esc = s => String(s == null ? '' : s).replace(/[&<>\"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst who = qr.fullName ? '<p style=\"font-size:20px\"><b>' + esc(qr.fullName) + '</b><br><span style=\"color:#555\">' + esc(qr.participantId) + '</span></p>' : '';\nconst htmlResponse = '<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>' + titles[outcome] + '</title></head>'\n  + '<body style=\"font-family:Arial,sans-serif;text-align:center;padding:40px\"><div style=\"max-width:420px;margin:auto;border:3px solid ' + colors[outcome] + ';border-radius:16px;padding:32px\">'\n  + '<h1 style=\"color:' + colors[outcome] + '\">' + titles[outcome] + '</h1>' + who + '<p>' + esc(message) + '</p></div></body></html>';\n\nreturn [{ json: {\n  outcome, message, htmlResponse,\n  attendanceId: 'ATT-' + Date.now().toString(36).toUpperCase(),\n  participantId: qr.participantId || req.participantId || '',\n  eventId: qr.eventId || '',\n  fullName: qr.fullName || '',\n  email: qr.email || '',\n  checkInTime: new Date().toISOString()\n} }];"
+      },
+      "id": "c72dc3ef-5371-4940-bc66-85b732fba7a0",
+      "name": "Evaluate Scan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2512,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7042128f-b42b-4f15-9755-ffe13148166c",
+              "leftValue": "={{ $json.outcome === 'SUCCESS' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1a9c3372-2d4c-4415-9fe9-983d891c48bd",
+      "name": "Attendance Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2784,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 333116457,
+          "mode": "list",
+          "cachedResultName": "Attendance",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y/edit#gid=333116457"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ParticipantID",
+              "displayName": "ParticipantID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CheckInTime",
+              "displayName": "CheckInTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "dcfaae90-e5f6-48c1-a55e-72ed62b7ffd1",
+      "name": "Record Attendance",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3056,
+        432
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 285700700,
+          "mode": "list",
+          "cachedResultName": "AuditLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y/edit#gid=285700700"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "14ace226-1831-49f0-b79e-58788c905439",
+      "name": "Log Attendance Scan",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3328,
+        432
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $('Evaluate Scan').first().json.htmlResponse }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "0d93321a-9f52-48be-9892-22ea9fbb6311",
+      "name": "Respond to Scan",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3584,
+        432
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Generate QR Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config (QR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config (QR)": {
+      "main": [
+        [
+          {
+            "node": "Build QR Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build QR Data": {
+      "main": [
+        [
+          {
+            "node": "Store QR Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store QR Info": {
+      "main": [
+        [
+          {
+            "node": "Email QR Pass",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email QR Pass": {
+      "main": [
+        [
+          {
+            "node": "Log QR Generated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attendance Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config (Attendance)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config (Attendance)": {
+      "main": [
+        [
+          {
+            "node": "Lookup QR Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup QR Record": {
+      "main": [
+        [
+          {
+            "node": "Check Attendance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Attendance": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Scan": {
+      "main": [
+        [
+          {
+            "node": "Attendance Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attendance Valid?": {
+      "main": [
+        [
+          {
+            "node": "Record Attendance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Attendance Scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Attendance": {
+      "main": [
+        [
+          {
+            "node": "Log Attendance Scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Attendance Scan": {
+      "main": [
+        [
+          {
+            "node": "Respond to Scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ccac4ba4-5ec1-48fe-982a-94c3844d84bb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d28136543f84bcdcd98ddae9db6f376b8db8b5960012d5d36a21f06ef2b75677"
+  },
+  "nodeGroups": [],
+  "id": "b58RxPIgUhwwksGr",
+  "tags": []
+}

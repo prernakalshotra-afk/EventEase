@@ -1,0 +1,584 @@
+{
+  "name": "4 - Certificate Generation & Distribution",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "issue-certificates",
+        "options": {}
+      },
+      "id": "12911dfe-b5a9-4ec9-af1b-a364c5e43c1d",
+      "name": "Issue Certificates Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        192,
+        32
+      ],
+      "webhookId": "ba5b4370-db40-4a48-94f9-1611d00a2dd8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c24af1ac-1997-40a5-b60f-1165771ec0bc",
+              "name": "sheetId",
+              "value": "Google_Sheet_Id",
+              "type": "string"
+            },
+            {
+              "id": "b8bf283e-d364-4477-ba60-5bb2c3bb8fc5",
+              "name": "eventId",
+              "value": "EVT-2026-001",
+              "type": "string"
+            },
+            {
+              "id": "a3dcc67c-6f77-4b7c-93a7-884fa6b740e6",
+              "name": "eventName",
+              "value": "TechFest 2026",
+              "type": "string"
+            },
+            {
+              "id": "73022bf9-b7bb-41b2-94e2-acd1fcb0f6f8",
+              "name": "eventDate",
+              "value": "2026-10-15T10:00:00+05:30",
+              "type": "string"
+            },
+            {
+              "id": "a87691fb-800a-4a57-ad24-2dc15e55be5b",
+              "name": "eventVenue",
+              "value": "Main Auditorium, Block A",
+              "type": "string"
+            },
+            {
+              "id": "c8997e6a-5c3e-43cc-895d-107c8a8df091",
+              "name": "organizerEmail",
+              "value": "Your_email",
+              "type": "string"
+            },
+            {
+              "id": "83c45ba4-32d1-41e6-a477-c5a1001ffe2b",
+              "name": "driveFolderId",
+              "value": "root",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "1946788b-a2af-45f5-bdd6-a2d986fc282b",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "Google_sheets_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Attendance",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "6b2ba2ae-8665-4260-afd8-c6f2dcdfe6a0",
+      "name": "Get Attendance",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        512,
+        32
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "Google_Sheets_Id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Certificates",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "f4abfc73-5aff-4d04-b260-fd005e8ee104",
+      "name": "Get Issued Certificates",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        704,
+        32
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst attended = $('Get Attendance').all().map(i => i.json);\n\nreturn attended.map(a => ({\n  json: {\n    participantId: a.participantId || \"12345\",\n    fullName: a.fullName || \"Prerna Kalshotra\",\n    email: a.email || \"prerna.kalshotra2@gmail.com\",\n    eventId: cfg.eventId || \"EVT-2026-001\",\n    checkInTime: a.checkInTime || \"Today\"\n  }\n}));"
+      },
+      "id": "0faff11f-0f2a-42d6-af00-a889a0d2b264",
+      "name": "Check Eligibility",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "YOUR_EMAIL",
+        "subject": "={{ 'Approval needed: issue ' + $('Check Eligibility').all().length + ' certificate(s) for ' + $('Config').first().json.eventName }}",
+        "message": "=<p>Hello,</p><p><b>{{ $('Check Eligibility').all().length }}</b> participant(s) attended <b>{{ $('Config').first().json.eventName }}</b> and are eligible for a certificate:</p><p>{{ $('Check Eligibility').all().slice(0, 25).map(i => i.json.fullName).join(', ') }}{{ $('Check Eligibility').all().length > 25 ? ' ...' : '' }}</p><p>Approve to generate and email the certificates, or reject to cancel.</p>",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "disapproveLabel": "Reject"
+          }
+        },
+        "options": {}
+      },
+      "id": "00bc8b95-4d3b-4134-bad4-0202d99732a8",
+      "name": "Approval Request",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1072,
+        32
+      ],
+      "executeOnce": true,
+      "webhookId": "225c03ce-fad1-4059-8c08-d4454f5f9218",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jyZLk2imQWVjwvKO",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "01658bb3-2a2f-40e1-a064-4cedcdc72c64",
+              "leftValue": "={{ !!($json.data && $json.data.approved === true) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3432edb7-139b-48d3-aaa6-2b8e2357ad24",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "Google_Sheets_Id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "AuditLogs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8a27ed30-8e75-4030-8f83-88a95a7603fa",
+      "name": "Log Rejection",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1552,
+        176
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst people = $('Check Eligibility').all().map(i => i.json);\nconst esc = s => String(s == null ? '' : s).replace(/[&<>\"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst fmt = d => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });\nconst eventDateStr = fmt(cfg.eventDate);\nconst issueDateStr = fmt(new Date());\nconst out = [];\n\nfor (const p of people) {\n  const certificateId = 'CERT-' + String(p.participantId).replace('PID-', '');\n  const html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Certificate ${esc(certificateId)}</title>\n<style>@page{size:A4 landscape;margin:0}body{margin:0;font-family:Georgia,serif;background:#fff}\n.wrap{width:1050px;height:720px;margin:20px auto;border:14px double #1e3a8a;padding:40px;box-sizing:border-box;text-align:center;position:relative}\nh1{font-size:54px;color:#1e3a8a;margin:30px 0 6px;letter-spacing:4px}p{font-size:22px;color:#333;margin:10px 0}\n.name{font-size:44px;margin:26px 0;border-bottom:2px solid #999;display:inline-block;padding:0 40px}\n.foot{position:absolute;bottom:36px;left:0;right:0;font-size:15px;color:#666}</style></head>\n<body><div class=\"wrap\"><h1>CERTIFICATE</h1><p>OF PARTICIPATION</p><p>This is to certify that</p>\n<div class=\"name\">${esc(p.fullName)}</div><p>has successfully attended</p>\n<p style=\"font-size:30px\"><b>${esc(cfg.eventName)}</b></p>\n<p>held on ${esc(eventDateStr)} at ${esc(cfg.eventVenue)}</p>\n<div class=\"foot\">Certificate ID: ${esc(certificateId)} &nbsp;|&nbsp; Issued: ${esc(issueDateStr)} &nbsp;|&nbsp; Participant ID: ${esc(p.participantId)}</div>\n</div></body></html>`;\n  const fileName = certificateId + '.html';\n  const bin = await this.helpers.prepareBinaryData(Buffer.from(html, 'utf8'), fileName, 'text/html');\n  out.push({ json: { ...p, certificateId, fileName, issuedAt: new Date().toISOString() }, binary: { data: bin } });\n}\nreturn out;"
+      },
+      "id": "5f169769-c45b-437c-90ed-8733d3ae0e41",
+      "name": "Generate Certificates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "name": "Certificate.pdf",
+        "driveId": {
+          "__rl": true,
+          "value": "Folder_id",
+          "mode": "id"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "=Folder_id",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "7c093ea2-d9de-45d6-aa55-11f736d3de63",
+      "name": "Store Certificate in Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1744,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const certs = $('Generate Certificates').all();\n// Drive upload returns JSON only, so we re-attach the certificate file from the earlier node\nreturn $input.all().map((item, i) => ({\n  json: {\n    ...certs[i].json,\n    driveFileId: item.json.id || '',\n    driveLink: item.json.id ? 'https://drive.google.com/file/d/' + item.json.id + '/view' : ''\n  },\n  binary: certs[i].binary\n}));"
+      },
+      "id": "b47df160-6e14-4cb1-a216-e96126c27780",
+      "name": "Attach Certificate and Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ 'Your certificate for ' + $('Config').first().json.eventName }}",
+        "message": "=<div style=\"font-family:Arial,sans-serif;max-width:560px\"><h2>Congratulations {{ $json.fullName }}! 🎓</h2><p>Thank you for attending <b>{{ $('Config').first().json.eventName }}</b>. Your personalised certificate is attached (open the file in a browser and choose <i>Print &rarr; Save as PDF</i> for a PDF copy).</p><p>Certificate ID: <b>{{ $json.certificateId }}</b></p></div>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "id": "525b52fa-daa0-4de6-99cd-eb368035d059",
+      "name": "Email Certificate",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2128,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "0c2313d3-c15f-4982-af16-757aa0c5bf65",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jyZLk2imQWVjwvKO",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "Google_Sheets_Id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Certificates",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "6351aa4d-7e03-4ec8-8278-9f3abd0a49ef",
+      "name": "Log Certificate",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2304,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "Google_Sheets_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "AuditLogs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ae434bd4-5dd3-4b3e-86ac-87c313f33307",
+      "name": "Log Audit",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2480,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Issue Certificates Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Get Attendance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Attendance": {
+      "main": [
+        [
+          {
+            "node": "Get Issued Certificates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Issued Certificates": {
+      "main": [
+        [
+          {
+            "node": "Check Eligibility",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Eligibility": {
+      "main": [
+        [
+          {
+            "node": "Approval Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Request": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Generate Certificates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Rejection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Certificates": {
+      "main": [
+        [
+          {
+            "node": "Store Certificate in Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Certificate in Drive": {
+      "main": [
+        [
+          {
+            "node": "Attach Certificate and Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Certificate and Link": {
+      "main": [
+        [
+          {
+            "node": "Email Certificate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Certificate": {
+      "main": [
+        [
+          {
+            "node": "Log Certificate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Certificate": {
+      "main": [
+        [
+          {
+            "node": "Log Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6f8eb301-ca76-4a3b-b9cf-ef582128ba6e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d28136543f84bcdcd98ddae9db6f376b8db8b5960012d5d36a21f06ef2b75677"
+  },
+  "nodeGroups": [],
+  "id": "W0RpaoKceOScUFSq",
+  "tags": []
+}

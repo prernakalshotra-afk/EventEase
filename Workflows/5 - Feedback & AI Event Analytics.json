@@ -1,0 +1,903 @@
+{
+  "name": "5 - Feedback & AI Event Analytics",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Event Feedback",
+        "formDescription": "Tell us how the event went. Your feedback helps us improve.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Participant ID",
+              "placeholder": "e.g. PID-XXXXXXXXX",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Overall Rating",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "5 - Excellent"
+                  },
+                  {
+                    "option": "4 - Good"
+                  },
+                  {
+                    "option": "3 - Average"
+                  },
+                  {
+                    "option": "2 - Poor"
+                  },
+                  {
+                    "option": "1 - Very poor"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Comments",
+              "fieldType": "textarea",
+              "placeholder": "What went well? What did not?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Suggestions",
+              "fieldType": "textarea",
+              "placeholder": "How can we improve next time?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a37267e0-9c3f-449c-b905-8a79857fb50c",
+      "name": "Feedback Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "b29833dd-934f-465d-aecd-b8addbf85d94"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ddd71c7-88e3-4f3e-82a2-8f072d47fbae",
+              "name": "sheetId",
+              "value": "YOUR_GOOGLE_SHEET_ID",
+              "type": "string"
+            },
+            {
+              "id": "02855160-1ae6-472f-8331-a774a19187bf",
+              "name": "eventId",
+              "value": "EVT-2026-001",
+              "type": "string"
+            },
+            {
+              "id": "71052ac7-f13a-4800-b0bd-9cd34a57f0dd",
+              "name": "participantId",
+              "value": "={{ ($json['Participant ID'] || '').toString().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "3b14b6b1-a5c2-4ebe-845c-d6da4523abd3",
+              "name": "rating",
+              "value": "={{ parseInt($json['Overall Rating']) }}",
+              "type": "string"
+            },
+            {
+              "id": "aea65015-e0d5-4b8a-b15a-3e1317d33725",
+              "name": "comments",
+              "value": "={{ ($json['Comments'] || '').toString().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "5669ace6-7b99-4ac6-bdfa-eeeca0c18027",
+              "name": "suggestions",
+              "value": "={{ ($json['Suggestions'] || '').toString().trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c2a9e588-ffbe-4739-ba19-142123edaad7",
+      "name": "Config (Feedback)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "Google_Sheet_Id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Feedback",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d777ea50-c7cc-45d0-957f-6110e40c510b",
+      "name": "Store Feedback",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        544,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 285700700,
+          "mode": "list",
+          "cachedResultName": "AuditLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y/edit#gid=285700700"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "labelIds",
+              "displayName": "labelIds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "outcome",
+              "displayName": "outcome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "htmlResponse",
+              "displayName": "htmlResponse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "attendanceId",
+              "displayName": "attendanceId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "participantId",
+              "displayName": "participantId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "eventId",
+              "displayName": "eventId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fullName",
+              "displayName": "fullName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "checkInTime",
+              "displayName": "checkInTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Participant ID",
+              "displayName": "Participant ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Overall Rating",
+              "displayName": "Overall Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Comments",
+              "displayName": "Comments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Suggestions",
+              "displayName": "Suggestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "submittedAt",
+              "displayName": "submittedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "formMode",
+              "displayName": "formMode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sheetId",
+              "displayName": "sheetId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rating",
+              "displayName": "rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "comments",
+              "displayName": "comments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "suggestions",
+              "displayName": "suggestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "dee2c345-8892-4365-8670-ba462f0aaab4",
+      "name": "Log Feedback",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        816,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "generate-report",
+        "options": {}
+      },
+      "id": "02ee2f53-be31-4f3a-a0cc-8545412847f4",
+      "name": "Generate Report Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        384
+      ],
+      "webhookId": "f882e083-5d96-42cc-85a6-45ab764f5d93"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1b55c291-6789-4982-8b5d-b564791189e4",
+              "name": "sheetId",
+              "value": "YOUR_GOOGLE_SHEET_ID",
+              "type": "string"
+            },
+            {
+              "id": "c78017cd-e5ea-4ee8-8a73-581c7fd770f4",
+              "name": "eventId",
+              "value": "EVT-2026-001",
+              "type": "string"
+            },
+            {
+              "id": "b6419cff-5cae-487d-8349-ab7fdd8b71b6",
+              "name": "eventName",
+              "value": "TechFest 2026",
+              "type": "string"
+            },
+            {
+              "id": "51d89d8b-f16f-49fd-b4fb-368452d30080",
+              "name": "eventDate",
+              "value": "2026-10-15T10:00:00+05:30",
+              "type": "string"
+            },
+            {
+              "id": "d9cc681f-5706-4e12-a644-38b6fa6a5715",
+              "name": "eventVenue",
+              "value": "Main Auditorium, Block A",
+              "type": "string"
+            },
+            {
+              "id": "bed54f85-3448-47c5-8fb8-137202713766",
+              "name": "organizerEmail",
+              "value": "organizer@example.com",
+              "type": "string"
+            },
+            {
+              "id": "d788c315-4b92-4a91-99d8-b6e09cfb3227",
+              "name": "geminiModel",
+              "value": "gemini-2.5-flash",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d3db8ecd-1817-4c84-a94f-d16e2578195f",
+      "name": "Config (Report)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "Google_sheets_Id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Participants",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "191d3840-7fd9-4267-9df6-faca48b9c686",
+      "name": "Get Participants (Report)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        544,
+        384
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "Google_Sheets_Id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Attendance",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "e89de39c-05ef-45d2-8a64-92b61ecde00c",
+      "name": "Get Attendance (Report)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        816,
+        384
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "Google_Sheets_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Feedback",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "eaf67d26-0bcc-449b-90c6-f8ea3adbe66a",
+      "name": "Get Feedback (Report)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1088,
+        384
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config (Report)').first().json;\nconst rows = name => $(name).all().map(i => i.json);\nconst participants = rows('Get Participants (Report)').filter(r => r.participantId);\nconst attendance = rows('Get Attendance (Report)').filter(r => r.participantId);\n\n// Error filter removed so data passes easily\nconst feedback = rows('Get Feedback (Report)');\n\nconst attended = new Set(attendance.map(a => a.participantId)).size;\nconst ratings = feedback.map(f => Math.round(Number(f.rating || f['Overall Rating'] || 5))).filter(n => n >= 1 && n <= 5);\nconst avgRating = ratings.length ? Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length * 10) / 10 : 0;\nconst dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };\nratings.forEach(r => { dist[r]++; });\n\nconst metrics = {\n  registered: participants.length,\n  attended,\n  attendanceRate: participants.length ? Math.round(attended / participants.length * 1000) / 10 : 0,\n  feedbackCount: feedback.length,\n  feedbackResponseRate: attended ? Math.round(feedback.length / attended * 1000) / 10 : 0,\n  avgRating,\n  ratingDistribution: dist\n};\n\nconst lines = feedback.slice(0, 200).map((f, i) =>\n  '#' + (i + 1) + ' | rating=' + (f.rating || f['Overall Rating'] || 5) + ' | comments: ' + (f.comments || f.Comments || '-') + ' | suggestions: ' + (f.suggestions || f.Suggestions || '-')\n).join('\\n');\n\nconst prompt = 'You are an expert event analyst. Analyse the participant feedback below for the event \"' + cfg.eventName + '\".\\n\\n'\n  + 'Return ONLY valid JSON with exactly these keys: \\n'\n  + 'sentiment (\"positive\", \"neutral\" or \"negative\"), satisfaction_score (integer 1-5), \\n'\n  + 'main_issues (array of short strings: recurring problems, most frequent first), \\n'\n  + 'positive_points (array of short strings), suggestions (array of concrete improvements), \\n'\n  + 'summary (2-4 sentence executive summary). \\n\\n'\n  + 'Base everything strictly on the feedback text and ratings; do not invent facts.\\n\\n'\n  + 'Average numeric rating: ' + avgRating + ' from ' + feedback.length + ' responses.\\n\\nFeedback:\\n' + lines;\n\nconst strArr = { type: 'ARRAY', items: { type: 'STRING' } };\nconst geminiRequest = {\n  contents: [{ role: 'user', parts: [{ text: prompt }] }],\n  generationConfig: {\n    temperature: 0.2,\n    responseMimeType: 'application/json',\n    responseSchema: {\n      type: 'OBJECT',\n      properties: {\n        sentiment: { type: 'STRING', enum: ['positive', 'neutral', 'negative'] },\n        satisfaction_score: { type: 'INTEGER' },\n        main_issues: strArr, positive_points: strArr, suggestions: strArr,\n        summary: { type: 'STRING' }\n      },\n      required: ['sentiment', 'satisfaction_score', 'main_issues', 'positive_points', 'suggestions', 'summary']\n    }\n  }\n};\n\nreturn [{ json: { metrics, geminiRequest } }];"
+      },
+      "id": "3a37e990-3c0e-4d1a-b073-fd4b1e9986a9",
+      "name": "Calculate Metrics and Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://generativelanguage.googleapis.com/v1beta/models/' + $('Config (Report)').first().json.geminiModel + ':generateContent' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.geminiRequest) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "69d0f8d1-4e8d-4259-8a7e-5330f2bf7968",
+      "name": "AI Feedback Analysis (Gemini)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1632,
+        384
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 4000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config (Report)').first().json;\nconst metrics = $('Calculate Metrics and Build Prompt').first().json.metrics;\nconst res = $input.first().json;\nconst esc = s => String(s == null ? '' : s).replace(/[&<>\"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst arr = x => Array.isArray(x) ? x.map(String) : [];\n\nlet ai, source = 'gemini', note = '';\ntry {\n  if (res.error) throw new Error('API error: ' + (typeof res.error === 'string' ? res.error : JSON.stringify(res.error)).slice(0, 200));\n  const text = res.candidates[0].content.parts[0].text;\n  ai = JSON.parse(String(text).replace(/```json|```/g, '').trim());\n} catch (e) {\n  // Fallback so the organiser still gets a report if the AI call fails\n  source = 'fallback';\n  note = e.message;\n  const a = metrics.avgRating;\n  ai = { sentiment: a >= 4 ? 'positive' : a >= 3 ? 'neutral' : 'negative', satisfaction_score: Math.round(a) || 3,\n         main_issues: [], positive_points: [], suggestions: [],\n         summary: 'AI analysis was unavailable (' + note + '). Rating-based summary only: average rating ' + a + '/5 from ' + metrics.feedbackCount + ' responses.' };\n}\n\nai = {\n  sentiment: ['positive', 'neutral', 'negative'].includes(String(ai.sentiment).toLowerCase()) ? String(ai.sentiment).toLowerCase() : 'neutral',\n  satisfaction_score: Math.min(5, Math.max(1, Math.round(Number(ai.satisfaction_score) || 3))),\n  main_issues: arr(ai.main_issues), positive_points: arr(ai.positive_points), suggestions: arr(ai.suggestions),\n  summary: String(ai.summary || '')\n};\n\nconst li = a => a.length ? '<ul>' + a.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '<p><i>None reported</i></p>';\nconst dist = metrics.ratingDistribution;\nconst reportHtml = '<div style=\"font-family:Arial,sans-serif;max-width:640px\">'\n  + '<h2>Event Report: ' + esc(cfg.eventName) + '</h2>'\n  + '<p style=\"background:#eef2ff;padding:12px;border-radius:8px\"><b>Overall sentiment:</b> ' + esc(ai.sentiment.toUpperCase())\n  + ' &nbsp;|&nbsp; <b>Satisfaction:</b> ' + ai.satisfaction_score + '/5 &nbsp;|&nbsp; <b>Avg rating:</b> ' + metrics.avgRating + '/5</p>'\n  + '<h3>Summary</h3><p>' + esc(ai.summary) + '</p>'\n  + '<h3>Key metrics</h3><table cellpadding=\"6\" style=\"border-collapse:collapse\" border=\"1\">'\n  + '<tr><td>Registered</td><td>' + metrics.registered + '</td></tr>'\n  + '<tr><td>Attended</td><td>' + metrics.attended + ' (' + metrics.attendanceRate + '%)</td></tr>'\n  + '<tr><td>Feedback responses</td><td>' + metrics.feedbackCount + ' (' + metrics.feedbackResponseRate + '% of attendees)</td></tr>'\n  + '<tr><td>Rating distribution (1-5)</td><td>' + [1, 2, 3, 4, 5].map(k => k + ':' + dist[k]).join(' &nbsp; ') + '</td></tr></table>'\n  + '<h3>Main issues</h3>' + li(ai.main_issues)\n  + '<h3>What went well</h3>' + li(ai.positive_points)\n  + '<h3>Suggestions</h3>' + li(ai.suggestions)\n  + '<p style=\"color:#888;font-size:12px\">Analysis source: ' + source + (note ? ' (' + esc(note) + ')' : '') + '</p></div>';\n\nreturn [{ json: { subject: 'Event Report: ' + cfg.eventName + ' - ' + ai.sentiment + ' (' + ai.satisfaction_score + '/5)',\n  reportHtml, ai, metrics, source } }];"
+      },
+      "id": "2bb2a5d5-9daa-4710-97c5-5fbef1115e15",
+      "name": "Parse AI Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Config (Report)').first().json.organizerEmail }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.reportHtml }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "be9786bc-2116-42a6-a1db-4d4131d91c1b",
+      "name": "Email Report to Organizer",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2160,
+        384
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "26330848-be01-4832-b97a-9478d73a50ed",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jyZLk2imQWVjwvKO",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "Google_Sheets_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "AuditLogs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "2cb6eb0e-c2d6-4196-851a-be65511a77ff",
+      "name": "Log Report",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2432,
+        384
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Feedback Form": {
+      "main": [
+        [
+          {
+            "node": "Config (Feedback)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config (Feedback)": {
+      "main": [
+        [
+          {
+            "node": "Store Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Feedback": {
+      "main": [
+        [
+          {
+            "node": "Log Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Report Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config (Report)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config (Report)": {
+      "main": [
+        [
+          {
+            "node": "Get Participants (Report)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Participants (Report)": {
+      "main": [
+        [
+          {
+            "node": "Get Attendance (Report)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Attendance (Report)": {
+      "main": [
+        [
+          {
+            "node": "Get Feedback (Report)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Feedback (Report)": {
+      "main": [
+        [
+          {
+            "node": "Calculate Metrics and Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Metrics and Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Feedback Analysis (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Feedback Analysis (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Result": {
+      "main": [
+        [
+          {
+            "node": "Email Report to Organizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Report to Organizer": {
+      "main": [
+        [
+          {
+            "node": "Log Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7bf015ab-d7d8-4dba-b827-d3067d0100e6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d28136543f84bcdcd98ddae9db6f376b8db8b5960012d5d36a21f06ef2b75677"
+  },
+  "nodeGroups": [],
+  "id": "XlFZ4aBfev0IEbDE",
+  "tags": []
+}

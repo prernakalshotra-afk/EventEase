@@ -1,0 +1,425 @@
+{
+  "name": "3 - Event Notifications & Reminders",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "c5759bef-c2f0-4e14-8f9f-fb35128dabf5",
+      "name": "Daily 9AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -816,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "83dd7b5b-92fe-427e-b886-1a88de362532",
+              "name": "sheetId",
+              "value": "YOUR_GOOGLE_SHEET_ID",
+              "type": "string"
+            },
+            {
+              "id": "17445570-d7d2-4317-8cc9-46524af96a52",
+              "name": "eventId",
+              "value": "EVT-2026-001",
+              "type": "string"
+            },
+            {
+              "id": "979f4284-a4a2-4684-a290-42c5b74f6d32",
+              "name": "eventName",
+              "value": "TechFest 2026",
+              "type": "string"
+            },
+            {
+              "id": "c4a8c34a-57b1-4030-8ae2-8b50b0431562",
+              "name": "eventDate",
+              "value": "2026-10-15T10:00:00+05:30",
+              "type": "string"
+            },
+            {
+              "id": "6e8471e4-c676-41c4-bb4f-8a9749514087",
+              "name": "eventVenue",
+              "value": "Main Auditorium, Block A",
+              "type": "string"
+            },
+            {
+              "id": "6c57b6ed-14cb-48a0-8c64-c305c46776f6",
+              "name": "organizerEmail",
+              "value": "organizer@example.com",
+              "type": "string"
+            },
+            {
+              "id": "09d6136f-8db8-4622-b73e-101c36f2f929",
+              "name": "reminderHours",
+              "value": 48,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "438698a0-3fa8-4532-a34b-6b9abdf913a8",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -544,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a027ab59-deed-4739-9af6-072477c05213",
+              "leftValue": "={{ (new Date($json.eventDate).getTime() - Date.now()) / 3600000 > 0 && (new Date($json.eventDate).getTime() - Date.now()) / 3600000 <= $json.reminderHours }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b5ac77b3-99c5-4c83-bd2a-237a54ff6b40",
+      "name": "Event Approaching?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        192
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d50b2901-35e4-4681-8e92-39e242536fc6",
+      "name": "Do Nothing (Event Not Near)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "Google_sheet_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Participants",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "8cab097d-c8ea-4950-8653-151499a8ffc1",
+      "name": "Get Participants",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "Google_sheet_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Notifications",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "856efb13-979c-43a8-a47d-55e75a332d9b",
+      "name": "Get Sent Reminders",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        272,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst participants = $('Get Participants').all().map(i => i.json).filter(p => p.participantId && p.email);\nconst alreadySent = new Set($('Get Sent Reminders').all().map(i => i.json.participantId).filter(Boolean));\nconst hoursLeft = Math.round((new Date(cfg.eventDate).getTime() - Date.now()) / 3600000);\n\n// Only remind people who have not received a reminder yet\nreturn participants\n  .filter(p => !alreadySent.has(p.participantId))\n  .map(p => ({ json: { ...p, hoursLeft } }));"
+      },
+      "id": "1b0bc297-54f1-42f8-9c2a-7b85fa839691",
+      "name": "Prepare Reminders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ 'Reminder: ' + $('Config').first().json.eventName + ' is coming up!' }}",
+        "message": "=<div style=\"font-family:Arial,sans-serif;max-width:560px\"><h2>See you soon! ⏰</h2><p>Hi {{ $json.fullName }},</p><p><b>{{ $('Config').first().json.eventName }}</b> starts in about <b>{{ $json.hoursLeft }} hours</b>.</p><ul><li><b>When:</b> {{ new Date($('Config').first().json.eventDate).toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' }) }}</li><li><b>Where:</b> {{ $('Config').first().json.eventVenue }}</li></ul><p>Please bring your <b>QR pass</b> (check your earlier email) for quick check-in.</p></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "c9dafb56-cdd5-4983-8f1c-41ec559cbc32",
+      "name": "Send Reminder Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "d3b0e114-a160-4b5d-a288-9a3ae08d7822",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jyZLk2imQWVjwvKO",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "Google_sheets_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Notifications",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4d4ec2da-75a3-4f7b-be1e-3c3a8a8e235d",
+      "name": "Log Notification",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1088,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "Google_sheets_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "AuditLogs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e709b4eb-7740-41b8-a996-8e2a9a97e7cd",
+      "name": "Log Audit",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1360,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily 9AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Event Approaching?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event Approaching?": {
+      "main": [
+        [
+          {
+            "node": "Get Participants",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Do Nothing (Event Not Near)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Participants": {
+      "main": [
+        [
+          {
+            "node": "Get Sent Reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Sent Reminders": {
+      "main": [
+        [
+          {
+            "node": "Prepare Reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Reminders": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reminder Email": {
+      "main": [
+        [
+          {
+            "node": "Log Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Notification": {
+      "main": [
+        [
+          {
+            "node": "Log Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "479954a7-b69c-47f3-ba93-580b48fb1d74",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d28136543f84bcdcd98ddae9db6f376b8db8b5960012d5d36a21f06ef2b75677"
+  },
+  "nodeGroups": [],
+  "id": "NYbEEUDcNLSEe9RD",
+  "tags": []
+}

@@ -1,0 +1,582 @@
+{
+  "name": "1 - Registration & Participant Management",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Event Registration",
+        "formDescription": "Register for the event. You will receive a confirmation email and a personal QR pass.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "placeholder": "Your full name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "placeholder": "you@example.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone",
+              "placeholder": "Mobile number"
+            },
+            {
+              "fieldLabel": "College",
+              "placeholder": "College / organisation"
+            },
+            {
+              "fieldLabel": "Department",
+              "placeholder": "e.g. Computer Science"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "56dd31fb-c3a6-4209-9b34-f0bc40ddfc65",
+      "name": "Registration Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -1088,
+        192
+      ],
+      "webhookId": "e7ae7fb4-1d61-49b3-ba5d-52b54e3be669"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3d4bc96d-9523-48ea-9335-3f9f27ffdb6c",
+              "name": "sheetId",
+              "value": "YOUR_GOOGLE_SHEET_ID",
+              "type": "string"
+            },
+            {
+              "id": "f84d58c1-9494-4bbf-95b2-58f9b5dc0eda",
+              "name": "eventId",
+              "value": "EVT-2026-001",
+              "type": "string"
+            },
+            {
+              "id": "85066272-b956-422d-9b52-acf080c4d436",
+              "name": "eventName",
+              "value": "TechFest 2026",
+              "type": "string"
+            },
+            {
+              "id": "808ba57f-6b22-47fb-8868-66e1b86575da",
+              "name": "eventDate",
+              "value": "2026-10-15T10:00:00+05:30",
+              "type": "string"
+            },
+            {
+              "id": "4b43cece-ae9c-49f8-8a18-f4883b4ab5be",
+              "name": "eventVenue",
+              "value": "Main Auditorium, Block A",
+              "type": "string"
+            },
+            {
+              "id": "4da8f3b1-7e12-4be6-b610-01f2403d6009",
+              "name": "organizerEmail",
+              "value": "organizer@example.com",
+              "type": "string"
+            },
+            {
+              "id": "91d4c0c9-e1ee-4f40-b41b-ae9664cd7311",
+              "name": "qrWebhookUrl",
+              "value": "http://localhost:5678/webhook/generate-qr",
+              "type": "string"
+            },
+            {
+              "id": "6de6ab7a-3fc9-4e2f-bff7-b9cbb9fd099b",
+              "name": "fullName",
+              "value": "={{ ($json['Full Name'] || '').toString().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "91a1c0cb-d4a7-4042-985a-2845c33ad83b",
+              "name": "email",
+              "value": "={{ ($json['Email'] || '').toString().trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "916d0518-a8ac-4816-afa2-9b5452bec190",
+              "name": "phone",
+              "value": "={{ ($json['Phone'] || '').toString().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "b5e8f572-1f9b-4797-9170-cb60dc11802a",
+              "name": "college",
+              "value": "={{ ($json['College'] || '').toString().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "5d169052-d0ee-489b-b90d-4fe96dab1506",
+              "name": "department",
+              "value": "={{ ($json['Department'] || '').toString().trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b38750c7-f08f-415c-9ff7-6a5339d958a6",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -816,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst errors = [];\nconst name = (item.fullName || '').toString().trim();\nconst email = (item.email || '').toString().trim().toLowerCase();\nconst phoneDigits = (item.phone || '').toString().replace(/[\\s\\-()+]/g, '');\n\nif (name.length < 2) errors.push('Full name is missing or too short');\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) errors.push('Email is missing or invalid');\nif (phoneDigits && !/^\\d{7,15}$/.test(phoneDigits)) errors.push('Phone must contain 7-15 digits');\n\nreturn [{ json: { ...item, fullName: name, email, valid: errors.length === 0, errors, validatedAt: new Date().toISOString() } }];"
+      },
+      "id": "41c33ad9-66c8-4136-affa-11ca173fc472",
+      "name": "Validate Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d451fe9d-cc7e-4398-8d4d-839cbe8d493b",
+              "leftValue": "={{ $json.valid === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5a01bd86-cf3a-4fcf-952b-7426e011ddd7",
+      "name": "Data Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "Google_sheet_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2003561977,
+          "mode": "list",
+          "cachedResultName": "Participants",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y/edit#gid=2003561977"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $('Validate Data').first().json.email }}"
+            },
+            {
+              "lookupColumn": "eventId",
+              "lookupValue": "={{ $('Config').first().json.eventId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6287adb0-1be5-42d7-bb09-7b0898375776",
+      "name": "Check Duplicate",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        0
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "23405cff-014d-48ba-9b01-ad7e9e40366f",
+              "leftValue": "={{ !!$json.participantId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7ad4ab33-a014-491d-a428-9c51ac93802d",
+      "name": "Duplicate Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        272,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Validate Data').first().json;\nconst cfg = $('Config').first().json;\nconst stamp = Date.now().toString(36).toUpperCase().slice(-5);\nconst rand = Math.random().toString(36).substring(2, 6).toUpperCase();\nconst participantId = 'PID-' + stamp + rand;\n\nreturn [{ json: {\n  participantId,\n  eventId: cfg.eventId,\n  fullName: base.fullName,\n  email: base.email,\n  phone: base.phone,\n  college: base.college,\n  department: base.department,\n  registrationDate: new Date().toISOString(),\n  status: 'REGISTERED'\n} }];"
+      },
+      "id": "edcd9b29-1d58-45da-a066-fae382b97a98",
+      "name": "Generate Participant ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2003561977,
+          "mode": "list",
+          "cachedResultName": "Participants",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Qj7EsjwyMvlZNsztZB3j-Mm-mURe5N7f6R2vy5ugI5Y/edit#gid=2003561977"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "739efd68-fc57-4a20-bf1b-e13c0b941034",
+      "name": "Store Participant",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        816,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Generate Participant ID').first().json.email }}",
+        "subject": "={{ 'Registration confirmed: ' + $('Config').first().json.eventName }}",
+        "message": "=<div style=\"font-family:Arial,sans-serif;max-width:560px\"><h2>You are registered! 🎉</h2><p>Hi {{ $('Generate Participant ID').first().json.fullName }},</p><p>Thank you for registering for <b>{{ $('Config').first().json.eventName }}</b>.</p><ul><li><b>Participant ID:</b> {{ $('Generate Participant ID').first().json.participantId }}</li><li><b>Date:</b> {{ new Date($('Config').first().json.eventDate).toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' }) }}</li><li><b>Venue:</b> {{ $('Config').first().json.eventVenue }}</li></ul><p>Your personal QR pass for check-in will arrive in a separate email in a moment.</p></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "343fa827-9a87-4188-a178-fd93e3007cf4",
+      "name": "Send Confirmation Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1088,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "2e04d12a-a693-4260-a645-bab5bc2ea0e9",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.qrWebhookUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ participantId: $('Generate Participant ID').first().json.participantId, fullName: $('Generate Participant ID').first().json.fullName, email: $('Generate Participant ID').first().json.email, eventId: $('Config').first().json.eventId, eventName: $('Config').first().json.eventName, eventDate: $('Config').first().json.eventDate, eventVenue: $('Config').first().json.eventVenue }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "683983ea-841c-49cf-8986-420d590e0aab",
+      "name": "Trigger QR Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "google_sheet_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Participants",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f3fad4d0-2899-4608-82ee-b31856c8511b",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1632,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "google_sheet_id",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Participants",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4c7f9bd6-1179-450d-bb47-24bc3c864ac2",
+      "name": "Log Rejection",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        272,
+        384
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rPlaNnXB3ruls7Rv",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Registration Form": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Validate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Data": {
+      "main": [
+        [
+          {
+            "node": "Data Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Valid?": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Rejection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Duplicate Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate Found?": {
+      "main": [
+        [
+          {
+            "node": "Log Rejection",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Participant ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Participant ID": {
+      "main": [
+        [
+          {
+            "node": "Store Participant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Participant": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation Email": {
+      "main": [
+        [
+          {
+            "node": "Trigger QR Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger QR Workflow": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c693c81b-51fd-4aa7-8130-9849f24b3247",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d28136543f84bcdcd98ddae9db6f376b8db8b5960012d5d36a21f06ef2b75677"
+  },
+  "nodeGroups": [],
+  "id": "iu19NCeWVNTweEeo",
+  "tags": []
+}
